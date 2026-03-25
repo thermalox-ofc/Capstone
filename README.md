@@ -1,6 +1,6 @@
 # PitStop Cloud MVP
 
-This project is a browser-based MVP for the auto repair shop system described in `Auto_Repair_Project_Overview.docx`. It focuses on the workflows called out in the overview:
+This project is a browser-based MVP for the auto repair shop system. It focuses on the workflows called out in the overview:
 
 - customer and loyalty tracking
 - vehicle records with mileage, warranty, and diagnostic codes
