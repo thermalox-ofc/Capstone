@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PitStop Cloud | Auto Repair Shop Manager</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <section class="login-shell" id="loginShell">
+    <div class="login-card">
+      <p class="eyebrow">Secure Access</p>
+      <h2>Sign in to PitStop Cloud</h2>
+      <p class="hero-copy">
+        Choose a role and sign in with one of the demo accounts. Admins and operators manage the shop. Customers see only their own vehicles, work orders, and appointments.
+      </p>
+      <form id="loginForm" class="form-grid login-form">
+        <label>
+          Role
+          <select name="role" id="loginRole" required>
+            <option value="admin">Admin</option>
+            <option value="operator">Operator</option>
+            <option value="customer">Customer</option>
+          </select>
+        </label>
+        <label>
+          Email
+          <input name="email" type="email" placeholder="admin@pitstopcloud.com" required>
+        </label>
+        <label>
+          Password
+          <input name="password" type="password" placeholder="Enter password" required>
+        </label>
+        <button type="submit" class="primary-btn form-btn">Sign In</button>
+      </form>
+      <p id="loginMessage" class="login-message" aria-live="polite"></p>
+      <div class="login-help">
+        <article class="list-card">
+          <h4>Admin Login</h4>
+          <p>`admin@pitstopcloud.com` / `admin123`</p>
+        </article>
+        <article class="list-card">
+          <h4>Operator Login</h4>
+          <p>`operator@pitstopcloud.com` / `operator123`</p>
+        </article>
+        <article class="list-card">
+          <h4>Customer Logins</h4>
+          <p>Use any seeded customer email with password `customer123`.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div>
+        <p class="eyebrow">Cloud-Based Vehicle Service Tracking and Diagnostics System</p>
+        <h1>PitStop Cloud</h1>
+        <p class="sidebar-copy">A lightweight service operations hub for small repair shops.</p>
+        <div class="session-card">
+          <p class="card-label">Signed in as</p>
+          <strong id="sessionName">Guest</strong>
+          <p id="sessionRole" class="sidebar-copy">No active session</p>
+          <button type="button" id="logoutButton" class="secondary-btn logout-btn">Log Out</button>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Primary">
+        <a href="#dashboard">Dashboard</a>
+        <a href="#customer-portal" data-customer-only>My Portal</a>
+        <a href="#customers" data-admin-only>Customers</a>
+        <a href="#vehicles" data-admin-only>Vehicles</a>
+        <a href="#work-orders" data-admin-only>Work Orders</a>
+        <a href="#schedule" data-admin-only>Schedule</a>
+        <a href="#inventory" data-admin-only>Inventory</a>
+      </nav>
+
+      <div class="sidebar-card">
+        <p class="card-label">What this MVP includes</p>
+        <ul>
+          <li>Customer and vehicle records</li>
+          <li>Service history and diagnostics</li>
+          <li>Scheduling with bay assignment</li>
+          <li>Inventory-linked work orders</li>
+          <li>Loyalty and retention insights</li>
+        </ul>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <section class="hero" id="dashboard">
+        <div>
+          <p class="eyebrow" id="heroEyebrow">Auto Repair Shop Management MVP</p>
+          <h2 id="heroTitle">Run the front office and the service bay from one dashboard.</h2>
+          <p class="hero-copy" id="heroCopy">
+            This project turns the auto repair shop overview into a working browser-based prototype with local data persistence and a focused workflow for service teams.
+          </p>
+        </div>
+        <div class="hero-actions" data-admin-only>
+          <button type="button" class="primary-btn" data-action="seed">Reload Demo Data</button>
+          <button type="button" class="secondary-btn" data-action="clear">Clear Saved Data</button>
+        </div>
+      </section>
+
+      <section class="metrics-grid" aria-label="Overview metrics" data-admin-only>
+        <article class="metric-card accent-orange">
+          <p>Active Customers</p>
+          <strong id="metricCustomers">0</strong>
+          <span>Profiles with linked vehicles and visit history</span>
+        </article>
+        <article class="metric-card accent-blue">
+          <p>Vehicles Tracked</p>
+          <strong id="metricVehicles">0</strong>
+          <span>VIN, mileage, warranty, and service context</span>
+        </article>
+        <article class="metric-card accent-green">
+          <p>Open Work Orders</p>
+          <strong id="metricOpenOrders">0</strong>
+          <span>Scheduled, in progress, or waiting on parts</span>
+        </article>
+        <article class="metric-card accent-red">
+          <p>Low Stock Parts</p>
+          <strong id="metricLowStock">0</strong>
+          <span>Inventory items at or below reorder threshold</span>
+        </article>
+      </section>
+
+      <section class="panel-grid" data-admin-only>
+        <article class="panel wide-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Operations Snapshot</p>
+              <h3>Service pipeline and customer retention</h3>
+            </div>
+          </div>
+          <div class="insight-grid">
+            <div class="insight-card">
+              <span>Bay utilization</span>
+              <strong id="utilizationRate">0%</strong>
+              <p>Based on scheduled jobs and available bays.</p>
+            </div>
+            <div class="insight-card">
+              <span>Loyalty enrollment</span>
+              <strong id="loyaltyRate">0%</strong>
+              <p>Customers enrolled in a discount tier or rewards plan.</p>
+            </div>
+            <div class="insight-card">
+              <span>Jobs waiting on parts</span>
+              <strong id="partsDelayCount">0</strong>
+              <p>Work orders blocked until inventory is replenished.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Reminders</p>
+              <h3>Upcoming service and pickup alerts</h3>
+            </div>
+          </div>
+          <div id="remindersList" class="stack-list"></div>
+        </article>
+      </section>
+
+      <section class="panel-grid forms-layout" id="customer-portal" data-customer-only>
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Customer Portal</p>
+              <h3 id="portalTitle">My vehicles and service history</h3>
+            </div>
+          </div>
+          <div class="insight-grid customer-insights">
+            <div class="insight-card">
+              <span>My Vehicles</span>
+              <strong id="customerVehicleCount">0</strong>
+              <p>Vehicles linked to your account.</p>
+            </div>
+            <div class="insight-card">
+              <span>Open Jobs</span>
+              <strong id="customerOpenOrders">0</strong>
+              <p>Repairs that are scheduled or currently active.</p>
+            </div>
+            <div class="insight-card">
+              <span>Upcoming Visits</span>
+              <strong id="customerUpcomingAppointments">0</strong>
+              <p>Appointments and pickup reminders on your profile.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">My Account</p>
+              <h3>Profile and loyalty tier</h3>
+            </div>
+          </div>
+          <div id="customerSummary" class="stack-list"></div>
+        </article>
+      </section>
+
+      <section class="panel-grid forms-layout" data-customer-only>
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">My Vehicles</p>
+              <h3>Vehicle records and diagnostics</h3>
+            </div>
+          </div>
+          <div id="customerVehicleList" class="stack-list"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">My Schedule</p>
+              <h3>Appointments and reminders</h3>
+            </div>
+          </div>
+          <div id="customerAppointmentList" class="stack-list"></div>
+        </article>
+      </section>
+
+      <section class="panel-grid forms-layout" data-customer-only>
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Book Appointment</p>
+              <h3>Book an appointment</h3>
+            </div>
+          </div>
+          <form id="customerBookingForm" class="form-grid">
+            <label>
+              Vehicle
+              <select name="vehicleId" id="customerVehicleSelect" required></select>
+            </label>
+            <label>
+              Appointment Type
+              <select name="serviceType" id="customerServiceSelect" required></select>
+            </label>
+            <label>
+              Payment Due
+              <select name="paymentMethod" id="customerPaymentMethod" required>
+                <option value="Insurance">Insurance</option>
+                <option value="Debit/Credit">Debit/Credit</option>
+                <option value="Cash">Cash</option>
+              </select>
+            </label>
+            <label>
+              Appointment Time
+              <input name="appointmentAt" id="customerAppointmentAt" type="datetime-local" required>
+            </label>
+            <button type="submit" class="primary-btn form-btn">Book Appointment</button>
+          </form>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">My Work Orders</p>
+              <h3>Current and completed service jobs</h3>
+            </div>
+          </div>
+          <div id="customerWorkOrderList" class="stack-list"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Maintenance Checklist</p>
+              <h3>Suggested routine checks and days left</h3>
+            </div>
+          </div>
+          <div id="customerMaintenanceList" class="stack-list"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">My Shop Updates</p>
+              <h3>What to expect next</h3>
+            </div>
+          </div>
+          <div id="customerNextSteps" class="stack-list"></div>
+        </article>
+      </section>
+
+      <section class="panel-grid forms-layout" data-admin-only>
+        <article class="panel" id="customers">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Customers</p>
+              <h3>Add a customer profile</h3>
+            </div>
+          </div>
+          <form id="customerForm" class="form-grid">
+            <label>
+              Full Name
+              <input name="name" type="text" placeholder="Jordan Carter" required>
+            </label>
+            <label>
+              Phone
+              <input name="phone" type="tel" placeholder="555-0101" required>
+            </label>
+            <label>
+              Email
+              <input name="email" type="email" placeholder="jordan@email.com" required>
+            </label>
+            <label>
+              Loyalty Tier
+              <select name="loyaltyTier">
+                <option value="None">None</option>
+                <option value="Silver">Silver</option>
+                <option value="Gold">Gold</option>
+                <option value="Fleet">Fleet</option>
+              </select>
+            </label>
+            <button type="submit" class="primary-btn form-btn">Save Customer</button>
+          </form>
+          <div id="customerList" class="stack-list"></div>
+        </article>
+
+        <article class="panel" id="vehicles">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Vehicles</p>
+              <h3>Register a vehicle</h3>
+            </div>
+          </div>
+          <form id="vehicleForm" class="form-grid">
+            <label>
+              Customer
+              <select name="customerId" id="vehicleCustomerSelect" required></select>
+            </label>
+            <label>
+              VIN
+              <input name="vin" type="text" placeholder="1HGCM82633A123456" required>
+            </label>
+            <label>
+              Vehicle
+              <input name="vehicleLabel" type="text" placeholder="2019 Honda Accord" required>
+            </label>
+            <label>
+              Mileage
+              <input name="mileage" type="number" min="0" placeholder="64200" required>
+            </label>
+            <label>
+              Warranty
+              <input name="warranty" type="text" placeholder="Powertrain until 80k miles">
+            </label>
+            <label class="full-span">
+              Diagnostic Codes
+              <input name="codes" type="text" placeholder="P0420, P0302">
+            </label>
+            <button type="submit" class="primary-btn form-btn">Save Vehicle</button>
+          </form>
+          <div id="vehicleList" class="stack-list"></div>
+        </article>
+      </section>
+
+      <section class="panel-grid forms-layout" data-admin-only>
+        <article class="panel" id="work-orders">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Work Orders</p>
+              <h3>Create a service job</h3>
+            </div>
+          </div>
+          <form id="workOrderForm" class="form-grid">
+            <label>
+              Customer
+              <select name="customerId" id="workOrderCustomerSelect" required></select>
+            </label>
+            <label>
+              Vehicle
+              <select name="vehicleId" id="workOrderVehicleSelect" required></select>
+            </label>
+            <label>
+              Job Status
+              <select name="status">
+                <option value="Scheduled">Scheduled</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Waiting on Parts">Waiting on Parts</option>
+                <option value="Ready for Pickup">Ready for Pickup</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </label>
+            <label>
+              Technician
+              <input name="technician" type="text" placeholder="Alex Rivera" required>
+            </label>
+            <label>
+              Parts Used
+              <input name="partsUsed" type="text" placeholder="Brake Pads, Oil Filter">
+            </label>
+            <label>
+              Estimated Cost
+              <input name="cost" type="number" min="0" step="0.01" placeholder="285.00" required>
+            </label>
+            <label class="full-span">
+              Service Notes
+              <textarea name="notes" rows="3" placeholder="Brake inspection, rotor resurfacing, customer approved service."></textarea>
+            </label>
+            <button type="submit" class="primary-btn form-btn">Save Work Order</button>
+          </form>
+          <div id="workOrderList" class="stack-list"></div>
+        </article>
+
+        <article class="panel" id="schedule">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Scheduling</p>
+              <h3>Book a bay and assign a technician</h3>
+            </div>
+          </div>
+          <form id="scheduleForm" class="form-grid">
+            <label>
+              Customer
+              <select name="customerId" id="scheduleCustomerSelect" required></select>
+            </label>
+            <label>
+              Vehicle
+              <select name="vehicleId" id="scheduleVehicleSelect" required></select>
+            </label>
+            <label>
+              Appointment Type
+              <select name="serviceType" id="scheduleServiceSelect" required></select>
+            </label>
+            <label>
+              Payment Due
+              <select name="paymentMethod" id="schedulePaymentMethod" required>
+                <option value="Insurance">Insurance</option>
+                <option value="Debit/Credit">Debit/Credit</option>
+                <option value="Cash">Cash</option>
+              </select>
+            </label>
+            <label>
+              Technician
+              <input name="technician" type="text" placeholder="Sam Lee" required>
+            </label>
+            <label>
+              Appointment Time
+              <input name="appointmentAt" id="scheduleAppointmentAt" type="datetime-local" required>
+            </label>
+            <label class="full-span">
+              Booking Note
+              <textarea name="bookingNote" rows="3" placeholder="Customer requested early drop-off or waiting room seating."></textarea>
+            </label>
+            <button type="submit" class="primary-btn form-btn">Save Appointment</button>
+          </form>
+          <div id="scheduleList" class="stack-list"></div>
+        </article>
+      </section>
+
+      <section class="panel-grid forms-layout" data-admin-only>
+        <article class="panel" id="inventory">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Inventory</p>
+              <h3>Track parts and reorder thresholds</h3>
+            </div>
+          </div>
+          <form id="inventoryForm" class="form-grid">
+            <label>
+              Part Name
+              <input name="name" type="text" placeholder="Brake Pad Set" required>
+            </label>
+            <label>
+              SKU
+              <input name="sku" type="text" placeholder="BPS-204" required>
+            </label>
+            <label>
+              In Stock
+              <input name="quantity" type="number" min="0" placeholder="18" required>
+            </label>
+            <label>
+              Reorder At
+              <input name="reorderPoint" type="number" min="0" placeholder="6" required>
+            </label>
+            <label>
+              Unit Price
+              <input name="price" type="number" min="0" step="0.01" placeholder="74.99" required>
+            </label>
+            <button type="submit" class="primary-btn form-btn">Save Part</button>
+          </form>
+          <div id="inventoryList" class="stack-list"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Project Mapping</p>
+              <h3>How the prototype reflects the overview</h3>
+            </div>
+          </div>
+          <div class="stack-list static-list">
+            <article class="list-card">
+              <h4>Centralized shop records</h4>
+              <p>Customers, vehicles, and work orders are linked so the full service history stays in one place.</p>
+            </article>
+            <article class="list-card">
+              <h4>Diagnostics assistance</h4>
+              <p>Vehicle records capture diagnostic trouble codes alongside notes, mileage, and warranty context.</p>
+            </article>
+            <article class="list-card">
+              <h4>Scheduling and reminders</h4>
+              <p>Appointments include bay assignment, technician ownership, and reminder types for service or pickup.</p>
+            </article>
+            <article class="list-card">
+              <h4>Inventory-linked workflow</h4>
+              <p>Low-stock monitoring and parts usage support quicker decisions before repair work is scheduled.</p>
+            </article>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
