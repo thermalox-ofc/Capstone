@@ -35,8 +35,8 @@ No installation is required. The application runs entirely in the browser using 
 ### Clone the repository
 
 ```bash
-git clone https://github.com/Hohpi/UMGC-CMSC-CAPSTONE-Capstone.git
-cd UMGC-CMSC-CAPSTONE-Capstone
+git clone https://github.com/thermalox-ofc/Capstone.git
+cd Capstone
 ```
 
 ### Open the application
