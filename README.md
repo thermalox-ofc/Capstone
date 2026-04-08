@@ -1,4 +1,4 @@
-# PitStop Cloud
+# Torque Garage
 
 **Auto Shop Service Management System — Phase I MVP**
 
