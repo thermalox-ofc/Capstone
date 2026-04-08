@@ -57,8 +57,8 @@ Use these credentials on the login screen to explore each role:
 
 | Role     | Email                          | Password      |
 |----------|--------------------------------|---------------|
-| Admin    | admin@pitstopcloud.com         | admin123      |
-| Operator | operator@pitstopcloud.com      | operator123   |
+| Admin    | admin@picloud.com         | admin123      |
+| Operator | operator@picloud.com      | operator123   |
 | Customer | Any seeded customer email      | customer123   |
 
 Seeded customer emails: `jordan@carterlogistics.com`, `maya.thompson@email.com`, `andre.lewis@email.com`
