@@ -9,7 +9,7 @@ Team: Beo, Cipriano II · Asmerom, Birkti · Hwang, Ryan
 
 ## Overview
 
-PitStop Cloud is a browser-based service management tool for small independent auto repair shops. It centralizes customer records, vehicle information, work orders, appointment scheduling, parts inventory, and a loyalty rewards program into a single, self-contained web application.
+Torque Garage is a browser-based service management tool for small independent auto repair shops. It centralizes customer records, vehicle information, work orders, appointment scheduling, parts inventory, and a loyalty rewards program into a single, self-contained web application.
 
 This Phase I deliverable implements the Customer Records and Vehicle Records modules in full, with the Dashboard, Work Orders, Schedule, and Inventory panels functional and connected through shared localStorage state.
 
