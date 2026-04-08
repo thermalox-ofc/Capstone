@@ -317,6 +317,7 @@
                 <option value="Fleet">Fleet</option>
               </select>
             </label>
+            <button type="button" id="cancelCustomerEdit" class="secondary-btn form-btn" hidden>Cancel Edit</button>
             <button type="submit" class="primary-btn form-btn">Save Customer</button>
           </form>
           <div id="customerList" class="stack-list"></div>
@@ -354,6 +355,8 @@
               Diagnostic Codes
               <input name="codes" type="text" placeholder="P0420, P0302">
             </label>
+            <p id="vehicleFormError" class="form-error full-span" aria-live="polite"></p>
+            <button type="button" id="cancelVehicleEdit" class="secondary-btn form-btn" hidden>Cancel Edit</button>
             <button type="submit" class="primary-btn form-btn">Save Vehicle</button>
           </form>
           <div id="vehicleList" class="stack-list"></div>

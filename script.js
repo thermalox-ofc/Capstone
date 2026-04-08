@@ -112,6 +112,52 @@ const SERVICE_CATALOG = [
   }
 ];
 
+// VIN validation — transliteration table per NHTSA standard (I, O, Q are excluded)
+const VIN_CHAR_VALUES = {
+  A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8,
+  J: 1, K: 2, L: 3, M: 4, N: 5,
+  P: 7, R: 9,
+  S: 2, T: 3, U: 4, V: 5, W: 6, X: 7, Y: 8, Z: 9,
+  0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9
+};
+
+// Positional weight factors for the 17 VIN positions
+const VIN_POSITION_WEIGHTS = [8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2];
+
+function validateVIN(vin) {
+  const upper = String(vin).toUpperCase().trim();
+
+  if (upper.length !== 17) {
+    return { valid: false, error: "VIN must be exactly 17 characters." };
+  }
+
+  if (/[IOQ]/.test(upper)) {
+    return { valid: false, error: "VIN cannot contain the letters I, O, or Q." };
+  }
+
+  if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(upper)) {
+    return { valid: false, error: "VIN contains an invalid character." };
+  }
+
+  // Weighted sum check-digit verification (position 9, index 8)
+  let sum = 0;
+  for (let i = 0; i < 17; i++) {
+    sum += VIN_CHAR_VALUES[upper[i]] * VIN_POSITION_WEIGHTS[i];
+  }
+
+  const remainder = sum % 11;
+  const expectedCheckDigit = remainder === 10 ? "X" : String(remainder);
+
+  if (upper[8] !== expectedCheckDigit) {
+    return {
+      valid: false,
+      error: `VIN check digit invalid. Expected '${expectedCheckDigit}' at position 9, got '${upper[8]}'.`
+    };
+  }
+
+  return { valid: true, error: null };
+}
+
 function createDemoState() {
   const customers = [
     {
@@ -141,7 +187,7 @@ function createDemoState() {
     {
       id: crypto.randomUUID(),
       customerId: customers[0].id,
-      vin: "1FTFW1E55KFA12345",
+      vin: "1FTFW1E50KFA12345",
       vehicleLabel: "2019 Ford F-150",
       mileage: 84210,
       warranty: "Extended warranty through Dec 2026",
@@ -150,7 +196,7 @@ function createDemoState() {
     {
       id: crypto.randomUUID(),
       customerId: customers[1].id,
-      vin: "3CZRU5H53MM701245",
+      vin: "3CZRU5H58MM701245",
       vehicleLabel: "2021 Honda HR-V",
       mileage: 38140,
       warranty: "Powertrain through 60k miles",
@@ -159,7 +205,7 @@ function createDemoState() {
     {
       id: crypto.randomUUID(),
       customerId: customers[2].id,
-      vin: "2T1BURHE7JC072114",
+      vin: "2T1BURHE9JC072114",
       vehicleLabel: "2018 Toyota Corolla",
       mileage: 92320,
       warranty: "Expired",
@@ -261,6 +307,8 @@ function createDemoState() {
 
 let state = loadState();
 let auth = loadAuth();
+let editingCustomerId = null;
+let editingVehicleId = null;
 
 const demoUsers = [
   {
@@ -327,7 +375,10 @@ const elements = {
   customerAppointmentAt: document.getElementById("customerAppointmentAt"),
   customerVehicleSelect: document.getElementById("customerVehicleSelect"),
   customerServiceSelect: document.getElementById("customerServiceSelect"),
-  customerPaymentMethod: document.getElementById("customerPaymentMethod")
+  customerPaymentMethod: document.getElementById("customerPaymentMethod"),
+  cancelCustomerEdit: document.getElementById("cancelCustomerEdit"),
+  cancelVehicleEdit: document.getElementById("cancelVehicleEdit"),
+  vehicleFormError: document.getElementById("vehicleFormError")
 };
 
 const adminOnlyNodes = document.querySelectorAll("[data-admin-only]");
@@ -403,6 +454,25 @@ elements.customerServiceSelect?.addEventListener("change", () => {
   syncPaymentOptions(elements.customerServiceSelect, elements.customerPaymentMethod);
 });
 
+elements.customerList.addEventListener("click", (event) => {
+  const btn = event.target.closest("[data-action]");
+  if (!btn) return;
+  const { action, id } = btn.dataset;
+  if (action === "edit-customer") startEditCustomer(id);
+  if (action === "delete-customer") deleteCustomer(id);
+});
+
+elements.vehicleList.addEventListener("click", (event) => {
+  const btn = event.target.closest("[data-action]");
+  if (!btn) return;
+  const { action, id } = btn.dataset;
+  if (action === "edit-vehicle") startEditVehicle(id);
+  if (action === "delete-vehicle") deleteVehicle(id);
+});
+
+elements.cancelCustomerEdit.addEventListener("click", cancelEditCustomer);
+elements.cancelVehicleEdit.addEventListener("click", cancelEditVehicle);
+
 if (elements.customerAppointmentAt) {
   elements.customerAppointmentAt.min = getMinDatetimeLocal();
 }
@@ -410,14 +480,23 @@ if (elements.customerAppointmentAt) {
 elements.customerForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const formData = new FormData(event.currentTarget);
-  state.customers.unshift({
-    id: crypto.randomUUID(),
+  const record = {
     name: String(formData.get("name")).trim(),
     phone: String(formData.get("phone")).trim(),
     email: String(formData.get("email")).trim(),
     loyaltyTier: String(formData.get("loyaltyTier"))
-  });
-  event.currentTarget.reset();
+  };
+
+  if (editingCustomerId) {
+    const index = state.customers.findIndex((c) => c.id === editingCustomerId);
+    if (index !== -1) {
+      state.customers[index] = { ...state.customers[index], ...record };
+    }
+    cancelEditCustomer();
+  } else {
+    state.customers.unshift({ id: crypto.randomUUID(), ...record });
+    event.currentTarget.reset();
+  }
   persistState();
   render();
 });
@@ -425,16 +504,34 @@ elements.customerForm.addEventListener("submit", (event) => {
 elements.vehicleForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const formData = new FormData(event.currentTarget);
-  state.vehicles.unshift({
-    id: crypto.randomUUID(),
+  const vin = String(formData.get("vin")).trim().toUpperCase();
+  const vinResult = validateVIN(vin);
+
+  if (!vinResult.valid) {
+    showVehicleFormError(vinResult.error);
+    return;
+  }
+
+  clearVehicleFormError();
+  const record = {
     customerId: String(formData.get("customerId")),
-    vin: String(formData.get("vin")).trim().toUpperCase(),
+    vin,
     vehicleLabel: String(formData.get("vehicleLabel")).trim(),
     mileage: Number(formData.get("mileage")),
     warranty: String(formData.get("warranty")).trim(),
     codes: String(formData.get("codes")).trim()
-  });
-  event.currentTarget.reset();
+  };
+
+  if (editingVehicleId) {
+    const index = state.vehicles.findIndex((v) => v.id === editingVehicleId);
+    if (index !== -1) {
+      state.vehicles[index] = { ...state.vehicles[index], ...record };
+    }
+    cancelEditVehicle();
+  } else {
+    state.vehicles.unshift({ id: crypto.randomUUID(), ...record });
+    event.currentTarget.reset();
+  }
   persistState();
   render();
 });
@@ -789,6 +886,10 @@ function renderCustomers() {
             <span class="pill">Tier: ${customer.loyaltyTier}</span>
             <span class="pill">${vehiclesOwned} vehicle(s)</span>
           </div>
+          <div class="card-actions">
+            <button type="button" class="card-btn card-btn-edit" data-action="edit-customer" data-id="${customer.id}">Edit</button>
+            <button type="button" class="card-btn card-btn-delete" data-action="delete-customer" data-id="${customer.id}">Delete</button>
+          </div>
         </article>
       `;
     },
@@ -816,6 +917,10 @@ function renderVehicles() {
             <span class="pill">${vehicle.codes || "No active codes"}</span>
           </div>
           <p>${nextService ? `Next suggested service: ${nextService.name} · ${nextService.daysLabel}` : "No mileage-based service suggestion yet."}</p>
+          <div class="card-actions">
+            <button type="button" class="card-btn card-btn-edit" data-action="edit-vehicle" data-id="${vehicle.id}">Edit</button>
+            <button type="button" class="card-btn card-btn-delete" data-action="delete-vehicle" data-id="${vehicle.id}">Delete</button>
+          </div>
         </article>
       `;
     },
@@ -1188,6 +1293,77 @@ function nextSlotDate(dayOffset, hour) {
   }
   date.setHours(hour, 0, 0, 0);
   return date;
+}
+
+function startEditCustomer(id) {
+  const customer = findCustomer(id);
+  if (!customer) return;
+  editingCustomerId = id;
+  const form = elements.customerForm;
+  form.elements.name.value = customer.name;
+  form.elements.phone.value = customer.phone;
+  form.elements.email.value = customer.email;
+  form.elements.loyaltyTier.value = customer.loyaltyTier;
+  form.querySelector('[type="submit"]').textContent = "Update Customer";
+  elements.cancelCustomerEdit.hidden = false;
+  form.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function cancelEditCustomer() {
+  editingCustomerId = null;
+  elements.customerForm.reset();
+  elements.customerForm.querySelector('[type="submit"]').textContent = "Save Customer";
+  elements.cancelCustomerEdit.hidden = true;
+}
+
+function deleteCustomer(id) {
+  if (!window.confirm("Delete this customer? Their linked vehicles will also be removed.")) return;
+  state.vehicles = state.vehicles.filter((v) => v.customerId !== id);
+  state.customers = state.customers.filter((c) => c.id !== id);
+  if (editingCustomerId === id) cancelEditCustomer();
+  persistState();
+  render();
+}
+
+function startEditVehicle(id) {
+  const vehicle = findVehicle(id);
+  if (!vehicle) return;
+  editingVehicleId = id;
+  const form = elements.vehicleForm;
+  form.elements.customerId.value = vehicle.customerId;
+  form.elements.vin.value = vehicle.vin;
+  form.elements.vehicleLabel.value = vehicle.vehicleLabel;
+  form.elements.mileage.value = vehicle.mileage;
+  form.elements.warranty.value = vehicle.warranty;
+  form.elements.codes.value = vehicle.codes;
+  form.querySelector('[type="submit"]').textContent = "Update Vehicle";
+  elements.cancelVehicleEdit.hidden = false;
+  clearVehicleFormError();
+  form.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function cancelEditVehicle() {
+  editingVehicleId = null;
+  elements.vehicleForm.reset();
+  elements.vehicleForm.querySelector('[type="submit"]').textContent = "Save Vehicle";
+  elements.cancelVehicleEdit.hidden = true;
+  clearVehicleFormError();
+}
+
+function deleteVehicle(id) {
+  if (!window.confirm("Delete this vehicle record?")) return;
+  state.vehicles = state.vehicles.filter((v) => v.id !== id);
+  if (editingVehicleId === id) cancelEditVehicle();
+  persistState();
+  render();
+}
+
+function showVehicleFormError(message) {
+  elements.vehicleFormError.textContent = message;
+}
+
+function clearVehicleFormError() {
+  elements.vehicleFormError.textContent = "";
 }
 
 render();
